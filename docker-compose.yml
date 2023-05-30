@@ -1,0 +1,7 @@
+version: '3'
+services:
+  care_data_downloader_app:
+    build: .
+    volumes:
+      - ./data:/app/data
+    entrypoint: /app/entrypoint.sh

@@ -1,0 +1,16 @@
+data/
+.venv/
+.vscode/
+__pycache__/
+.gitignore
+*.pyc
+*.pyo
+*.pyd
+*.pyz
+*.pyzw
+*.egg-info/
+dist/
+build/
+*.log
+*.lock
+*.bak
