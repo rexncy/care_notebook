@@ -6,8 +6,13 @@ from app_logger import get_logger
 import logging
 
 logger = get_logger(__name__, logging.INFO, True, True)
+
+logging.basicConfig()
+schedule_logger = logging.getLogger('schedule')
+schedule_logger.setLevel(level=logging.DEBUG)
+
 script = os.path.join(os.path.dirname(__file__), 'care_data_downloader.py')
-# Set the UTC+8 timezone
+
 
 # Define the function to execute the Python script
 def run_script():
