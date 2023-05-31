@@ -1,1 +1,3 @@
-python /app/care_data_downloader.py
+#!/bin/sh
+
+python /app/app_scheduler.py

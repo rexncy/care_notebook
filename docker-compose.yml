@@ -5,3 +5,5 @@ services:
     volumes:
       - ./data:/app/data
     entrypoint: /app/entrypoint.sh
+    env_file:
+      - .env

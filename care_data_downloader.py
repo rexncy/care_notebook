@@ -1,6 +1,6 @@
 # Login and download AED and Account data csv
 from splinter import Browser
-import logging, os, time
+import logging, os
 from selenium import webdriver
 from datetime import datetime
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -36,8 +36,12 @@ prefs = {
 
 options.add_experimental_option("prefs", prefs)
 options.add_argument("--disable-infobars")
-options.add_argument("--no-sandbox");
-options.add_argument("--disable-dev-shm-usage");
+options.add_argument("--no-sandbox")
+options.add_argument("--window-size=1920,1080")
+options.add_argument("--start-maximized")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--headless")
+
 
 # when the page needs more time to wait
 EXTENDED_TIMEOUT = 15
@@ -46,12 +50,11 @@ with Browser(
     "chrome",
     user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
     options=options,
-    headless=True,
     service=ChromeService(ChromeDriverManager().install()),
 ) as b:
     login_page = "https://es.hkfsd.gov.hk/care/cms/en"
     username = "admin"
-    password = "Fsd_aed10"
+    password = os.environ.get('PASSWORD')
 
     b.visit(login_page)
 
@@ -70,7 +73,7 @@ with Browser(
 
     if b.is_element_present_by_text('Logout') or b.is_element_present_by_value('Logout'):
         logger.info("Login successful.")
-
+        
         # download AED export file via direct link
         b.visit("https://es.hkfsd.gov.hk/care/cms/en/aed/export/?_sort=id&_order=desc")
         # download AED export file via direct link
@@ -85,7 +88,7 @@ with Browser(
         # assign serial num to new AEDs
         aed_df = assign_serial_number(os.path.join(TODAY_DIR, 'AED.xlsx'), True)
         logger.info(f'df_aed: {aed_df.shape[0]}')
-
+        
         # process aed approval preparation 
         # Find all tr elements that contain img with src="img/icon-offer_0.png"
         b.visit('https://es.hkfsd.gov.hk/care/cms/en/aed/main/')
@@ -100,12 +103,13 @@ with Browser(
             # visit get the edit link
             b.visit(f'https://es.hkfsd.gov.hk/care/cms/en/aed/main/edit/{aed_id}/')
             # get the assigned Serial number
-
+            
             title_field = b.find_by_id('title_1')
             address_field = b.find_by_id('address_1')
             location_field = b.find_by_id('location_1')
 
             sn = fetch_aed_serial_number(aed_df, title_field.value, address_field.value, location_field.value)
+            
             # fill the assigned Serial number
             if( sn and len(sn) > 0):
                 logger.info(f'Existing participant: filling sn for aed_id: { aed_id }; sn: {sn}')
@@ -113,9 +117,14 @@ with Browser(
             else:
                 b.find_by_id('serial_no').fill('')
                 logger.info(f'New participant: aed_id: { aed_id }')
-
+            
+            # The following code does not work in headless mode, despite wait_time is supplied for the element to show
+            # it appears to be a driver bug
             # click save button
-            b.find_by_id('btn-save').first.click()
+            # b.find_by_id('btn-save').last.click()
+
+            # workaround: use js to submit the form
+            b.execute_script("$('form:first').submit();")
 
         b.visit("https://es.hkfsd.gov.hk/care/cms/en/logout/main/")
         logger.info("Logout successful.")
