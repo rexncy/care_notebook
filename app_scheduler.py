@@ -28,8 +28,10 @@ logger.info('Running scheduler...')
 try:
     while True:
         schedule.run_pending()
-        time.sleep(5) # wait for 5 seconds
+        time.sleep(60) # wait for 60 seconds
 except KeyboardInterrupt:
     logger.info('Received keyboard interrupt. Stopping...')
     schedule.clear('care_data_downloader_task')
     exit()
+except Exception as e:
+    logger.error('Unexpected exception occurred: %s', str(e))
