@@ -16,8 +16,11 @@ def run_script():
 # Schedule the script to run every day at 12:00 PM UTC+8
 
 logger.info(script)
-schedule.every().day.at("11:00", 'Asia/Shanghai').do(run_script).tag('care_data_downloader_task')
 schedule.every().day.at("08:15", 'Asia/Shanghai').do(run_script).tag('care_data_downloader_task')
+
+if os.environ.get('DEBUG', False):
+    logger.info('Running script for DEBUG purposes')
+    run_script()
 
 logger.info('Running scheduler...')
 
