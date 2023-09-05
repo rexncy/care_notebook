@@ -11,7 +11,7 @@ logging.basicConfig()
 schedule_logger = logging.getLogger('schedule')
 schedule_logger.setLevel(level=logging.DEBUG)
 
-script = os.path.join(os.path.dirname(__file__), 'care_data_downloader.py')
+script = os.path.join(os.path.dirname(__file__), 'care_bot.py')
 
 
 # Define the function to execute the Python script
@@ -21,7 +21,7 @@ def run_script():
 # Schedule the script to run every day at 12:00 PM UTC+8
 
 logger.info(script)
-schedule.every().day.at("08:15", 'Asia/Shanghai').do(run_script).tag('care_data_downloader_task')
+schedule.every().day.at("08:15", 'Asia/Shanghai').do(run_script).tag('care_bot_task')
 
 if os.environ.get('DEBUG', False):
     logger.info('Running script for DEBUG purposes')
@@ -36,7 +36,7 @@ try:
         time.sleep(60) # wait for 60 seconds
 except KeyboardInterrupt:
     logger.info('Received keyboard interrupt. Stopping...')
-    schedule.clear('care_data_downloader_task')
+    schedule.clear('care_bot_task')
     exit()
 except Exception as e:
     logger.error('Unexpected exception occurred: %s', str(e))

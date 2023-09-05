@@ -1,13 +1,14 @@
 # Login and download AED and Account data csv
 from splinter import Browser
-import logging, os
+import os
+from loguru import logger
 from selenium import webdriver
 from datetime import datetime
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from file_utils import back_dir, download_wait
 from care_data_utils import assign_serial_number, fetch_aed_serial_number
-from app_logger import get_logger
+from care_navigator import login, isLoggedIn, download_aed_file, download_account_file, scrape_unapproved_aed_ids, logout
 
 today = datetime.today().strftime("%Y%m%d")
 
@@ -19,9 +20,6 @@ if not os.path.exists(TODAY_DIR):
 else:
     back_dir(TODAY_DIR)
 
-
-
-logger = get_logger(__name__, logging.INFO, True, True)
 
 logger.info(f"TODAY_DIR: {TODAY_DIR}")
 
@@ -52,72 +50,54 @@ with Browser(
     options=options,
     service=ChromeService(ChromeDriverManager().install()),
 ) as b:
-    login_page = "https://es.hkfsd.gov.hk/care/cms/en"
-    username = "admin"
-    password = os.environ.get('PASSWORD')
+    b = login(b)
 
-    b.visit(login_page)
-
-    username_field = b.find_by_name("username")
-    username_field.fill(username)
-
-    password_field = b.find_by_name("password")
-    password_field.fill(password)
-
-    # slide to login
-    logger.info("Login attempt...")
-
-    draggable = b.find_by_css(".ui-draggable-handle")
-    droppable = b.find_by_css(".ui-droppable")
-    draggable.drag_and_drop(droppable)
-
-    if b.is_element_present_by_text('Logout') or b.is_element_present_by_value('Logout'):
+    if isLoggedIn(b):
         logger.info("Login successful.")
-        
-        # download AED export file via direct link
-        b.visit("https://es.hkfsd.gov.hk/care/cms/en/aed/export/?_sort=id&_order=desc")
-        # download AED export file via direct link
-        b.visit(
-            "https://es.hkfsd.gov.hk/care/cms/en/account/export/?_sort=id&_order=desc"
-        )
+
+        b = download_aed_file(b)
+        b = download_account_file(b)
 
         logger.info('Awaiting download to complete...')
-        download_wait(TODAY_DIR, 10)
+        download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
         logger.info('Download completed.')
 
         # assign serial num to new AEDs
-        aed_df = assign_serial_number(os.path.join(TODAY_DIR, 'AED.xlsx'), True)
+        aed_df = assign_serial_number(
+            os.path.join(TODAY_DIR, 'AED.xlsx'), True)
         logger.info(f'df_aed: {aed_df.shape[0]}')
-        
-        # process aed approval preparation 
+
+        # process aed approval preparation
         # Find all tr elements that contain img with src="img/icon-offer_0.png"
-        b.visit('https://es.hkfsd.gov.hk/care/cms/en/aed/main/')
-        tr_elements = b.find_by_xpath('//tr[.//img[@src="img/icon-offer_0.png"]]')
-        arr_aed_id = []
-        for tr in tr_elements:
-            arr_aed_id.append(tr['data-id'])
+
+        arr_aed_id = scrape_unapproved_aed_ids(b)
 
         for aed_id in arr_aed_id:
             logger.info(f"Processing AED = {aed_id}")
 
             # visit get the edit link
-            b.visit(f'https://es.hkfsd.gov.hk/care/cms/en/aed/main/edit/{aed_id}/')
+            b.visit(
+                f'https://es.hkfsd.gov.hk/care/cms/en/aed/main/edit/{aed_id}/')
             # get the assigned Serial number
-            
+
             title_field = b.find_by_id('title_1')
             address_field = b.find_by_id('address_1')
             location_field = b.find_by_id('location_1')
 
-            sn = fetch_aed_serial_number(aed_df, title_field.value, address_field.value, location_field.value)
-            
+            sn = fetch_aed_serial_number(
+                aed_df, title_field.value, address_field.value, location_field.value)
+
             # fill the assigned Serial number
-            if( sn and len(sn) > 0):
-                logger.info(f'Existing participant: filling sn for aed_id: { aed_id }; sn: {sn}')
+            if (sn and len(sn) > 0):
+                logger.info(
+                    f'Existing participant: filling sn for aed_id: { aed_id }; sn: {sn}')
                 b.find_by_id('serial_no').fill(sn)
             else:
                 b.find_by_id('serial_no').fill('')
                 logger.info(f'New participant: aed_id: { aed_id }')
-            
+        
+        
+
             # The following code does not work in headless mode, despite wait_time is supplied for the element to show
             # it appears to be a driver bug
             # click save button
@@ -126,7 +106,7 @@ with Browser(
             # workaround: use js to submit the form
             b.execute_script("$('form:first').submit();")
 
-        b.visit("https://es.hkfsd.gov.hk/care/cms/en/logout/main/")
+        logout(b)
         logger.info("Logout successful.")
     else:
         logger.info("Login failure.")

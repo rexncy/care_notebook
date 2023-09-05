@@ -3,6 +3,7 @@
 import pandas as pd
 import os
 
+
 def assign_serial_number(to_aed_xlsx, will_generate_excel=False):
     if not os.path.exists(to_aed_xlsx):
         return None
@@ -38,12 +39,13 @@ def assign_serial_number(to_aed_xlsx, will_generate_excel=False):
                 ).zfill(
                     3
                 )  # increment the serial number
-                df.at[index, "Serial No."] = new_serial_num  # update new serial number
+                # update new serial number
+                df.at[index, "Serial No."] = new_serial_num
                 tuples_highlight_yellow.append(index)
                 latest_serial_nums.update({domain: new_serial_num})
             else:
-                df.at[index, "Serial No."] = ""  # leave the serial number blank
-
+                # leave the serial number blank
+                df.at[index, "Serial No."] = ""
 
     if will_generate_excel:
         # apply style
@@ -62,8 +64,12 @@ def assign_serial_number(to_aed_xlsx, will_generate_excel=False):
 
     return df
 
+def get_no_district_aed_ids(aed_df):
+    filt = (aed_df['District'].isna())
+    df = aed_df[filt]
+    return df['Serial No.'].values.tolist()
+
 # assume from_df is not None
-# expect 
 def fetch_aed_serial_number(from_df, title, address, location):
     filt_title = (from_df['Title (En)'] == title)
     filt_address = (from_df['Address (En)'] == address)
