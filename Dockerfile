@@ -18,6 +18,7 @@ RUN pip install --no-cache-dir webdriver-manager
 RUN pip install --no-cache-dir pandas
 RUN pip install --no-cache-dir openpyxl
 RUN pip install --no-cache-dir loguru
+
 # for df style
 RUN pip install --no-cache-dir jinja2
 RUN pip install --no-cache-dir schedule

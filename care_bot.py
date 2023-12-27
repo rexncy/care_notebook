@@ -8,7 +8,17 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from file_utils import back_dir, download_wait
 from care_data_utils import assign_serial_number, fetch_aed_serial_number
-from care_navigator import login, isLoggedIn, download_aed_file, download_account_file, scrape_unapproved_aed_ids, logout
+from care_navigator import (
+    login,
+    isLoggedIn,
+    download_aed_file,
+    download_account_file,
+    scrape_unapproved_aed_ids,
+    logout,
+    append_to_field_value,
+)
+
+import pandas as pd
 
 today = datetime.today().strftime("%Y%m%d")
 
@@ -58,14 +68,14 @@ with Browser(
         b = download_aed_file(b)
         b = download_account_file(b)
 
-        logger.info('Awaiting download to complete...')
+        logger.info("Awaiting download to complete...")
         download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
-        logger.info('Download completed.')
+        logger.info("Download completed.")
 
         # assign serial num to new AEDs
-        aed_df = assign_serial_number(
-            os.path.join(TODAY_DIR, 'AED.xlsx'), True)
-        logger.info(f'df_aed: {aed_df.shape[0]}')
+        # aed_df = assign_serial_number(os.path.join(TODAY_DIR, "AED.xlsx"), True)
+        aed_df = pd.read_excel(os.path.join(TODAY_DIR, "AED.xlsx"))
+        logger.info(f"df_aed: {aed_df.shape[0]}")
 
         # process aed approval preparation
         # Find all tr elements that contain img with src="img/icon-offer_0.png"
@@ -76,27 +86,22 @@ with Browser(
             logger.info(f"Processing AED = {aed_id}")
 
             # visit get the edit link
-            b.visit(
-                f'https://es.hkfsd.gov.hk/care/cms/en/aed/main/edit/{aed_id}/')
+            b.visit(f"https://es.hkfsd.gov.hk/care/cms/en/aed/main/edit/{aed_id}/")
             # get the assigned Serial number
 
-            title_field = b.find_by_id('title_1')
-            address_field = b.find_by_id('address_1')
-            location_field = b.find_by_id('location_1')
+            # fill serial_no as aed_id
+            serial_no_field = b.find_by_id("serial_no")
+            if not serial_no_field.value or len(serial_no_field.value) == 0:
+                logger.debug(f"Fill serial_no: {aed_id}")
+                b.find_by_id("serial_no").fill(aed_id)
 
-            sn = fetch_aed_serial_number(
-                aed_df, title_field.value, address_field.value, location_field.value)
+            # see whether yellow-dot.png exists, if not, remark warning
 
-            # fill the assigned Serial number
-            if (sn and len(sn) > 0):
-                logger.info(
-                    f'Existing participant: filling sn for aed_id: { aed_id }; sn: {sn}')
-                b.find_by_id('serial_no').fill(sn)
+            if "yellow-dot.png" in b.html:
+                logger.debug(f"Yellow-dot.png exists for {aed_id}")
             else:
-                b.find_by_id('serial_no').fill('')
-                logger.info(f'New participant: aed_id: { aed_id }')
-        
-        
+                logger.info(f"未完成地圖設定: {aed_id}")
+                append_to_field_value(b, "remark_3", "未完成地圖設定")
 
             # The following code does not work in headless mode, despite wait_time is supplied for the element to show
             # it appears to be a driver bug

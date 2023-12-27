@@ -64,19 +64,21 @@ def assign_serial_number(to_aed_xlsx, will_generate_excel=False):
 
     return df
 
+
 def get_no_district_aed_ids(aed_df):
-    filt = (aed_df['District'].isna())
+    filt = aed_df["District"].isna()
     df = aed_df[filt]
-    return df['Serial No.'].values.tolist()
+    return df["Serial No."].values.tolist()
+
 
 # assume from_df is not None
 def fetch_aed_serial_number(from_df, title, address, location):
-    filt_title = (from_df['Title (En)'] == title)
-    filt_address = (from_df['Address (En)'] == address)
-    filt_location = (from_df['Location (En)'] == location)
+    filt_title = from_df["Title (En)"] == title
+    filt_address = from_df["Address (En)"] == address
+    filt_location = from_df["Location (En)"] == location
 
     df_filt = from_df[filt_title & filt_address & filt_location]
 
-    sn = df_filt['Serial No.'].iat[0]
+    sn = df_filt["Serial No."].iat[0]
 
     return str(sn)
