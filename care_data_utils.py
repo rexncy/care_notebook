@@ -4,6 +4,11 @@ import pandas as pd
 import os
 
 
+def rename_file_if_exists(dir, old_name, new_name):
+    if os.path.exists(os.path.join(dir, old_name)):
+        os.rename(os.path.join(dir, old_name), os.path.join(dir, new_name))
+
+
 def assign_serial_number(to_aed_xlsx, will_generate_excel=False):
     if not os.path.exists(to_aed_xlsx):
         return None

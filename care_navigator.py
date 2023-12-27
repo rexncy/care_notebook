@@ -35,7 +35,7 @@ def isLoggedIn(b):
 def download_unapproved_aed_file(b):
     logger.debug("Download unapproved AED file...")
     b.visit(
-        "https://es.hkfsd.gov.hk/care/cms/en/aed/export/?owner=0&amp;serial_no=&amp;title=&amp;address=&amp;location=&amp;status=-1&amp;used=-1&amp;operator=-1&amp;accessibility=-1&amp;ground_level=-1&amp;availability=-1&amp;approved=0&amp;_sort=id&amp;_order=desc"
+        "https://es.hkfsd.gov.hk/care/cms/en/aed/export/?_sort=id&_order=desc&approved=0"
     )
     return b
 
@@ -49,6 +49,14 @@ def download_aed_file(b):
 def download_account_file(b):
     # download Account export file via direct link
     b.visit("https://es.hkfsd.gov.hk/care/cms/en/account/export/?_sort=id&_order=desc")
+    return b
+
+
+def download_outstanding_aed(b):
+    # download Account export file via direct link
+    b.visit(
+        "https://es.hkfsd.gov.hk/care/cms/en/outstanding/export/?status=0&_sort=id&_order=desc"
+    )
     return b
 
 

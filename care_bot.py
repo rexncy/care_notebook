@@ -6,8 +6,9 @@ from selenium import webdriver
 from datetime import datetime
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
+from care_data_utils import rename_file_if_exists
+
 from file_utils import back_dir, download_wait
-from care_data_utils import assign_serial_number, fetch_aed_serial_number
 from care_navigator import (
     login,
     isLoggedIn,
@@ -15,6 +16,7 @@ from care_navigator import (
     download_account_file,
     download_unapproved_aed_file,
     scrape_unapproved_aed_ids,
+    download_outstanding_aed,
     logout,
     append_to_field_value,
 )
@@ -66,16 +68,6 @@ with Browser(
     if isLoggedIn(b):
         logger.info("Login successful.")
 
-        b = download_aed_file(b)
-        b = download_account_file(b)
-
-        download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
-
-        # assign serial num to new AEDs
-        # aed_df = assign_serial_number(os.path.join(TODAY_DIR, "AED.xlsx"), True)
-        aed_df = pd.read_excel(os.path.join(TODAY_DIR, "AED.xlsx"))
-        logger.info(f"df_aed: {aed_df.shape[0]}")
-
         # process aed approval preparation
         # Find all tr elements that contain img with src="img/icon-offer_0.png"
 
@@ -109,6 +101,15 @@ with Browser(
 
             # workaround: use js to submit the form
             b.execute_script("$('form:first').submit();")
+
+        b = download_unapproved_aed_file(b)
+        download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
+        rename_file_if_exists(TODAY_DIR, "AED.xlsx", "AED_unapproved.xlsx")
+
+        b = download_aed_file(b)
+        b = download_account_file(b)
+        b = download_outstanding_aed(b)
+        download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
 
         logout(b)
         logger.info("Logout successful.")
