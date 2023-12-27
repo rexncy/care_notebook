@@ -13,6 +13,7 @@ from care_navigator import (
     isLoggedIn,
     download_aed_file,
     download_account_file,
+    download_unapproved_aed_file,
     scrape_unapproved_aed_ids,
     logout,
     append_to_field_value,
@@ -68,9 +69,7 @@ with Browser(
         b = download_aed_file(b)
         b = download_account_file(b)
 
-        logger.info("Awaiting download to complete...")
         download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
-        logger.info("Download completed.")
 
         # assign serial num to new AEDs
         # aed_df = assign_serial_number(os.path.join(TODAY_DIR, "AED.xlsx"), True)
@@ -83,7 +82,7 @@ with Browser(
         arr_aed_id = scrape_unapproved_aed_ids(b)
 
         for aed_id in arr_aed_id:
-            logger.info(f"Processing AED = {aed_id}")
+            logger.debug(f"Processing AED = {aed_id}")
 
             # visit get the edit link
             b.visit(f"https://es.hkfsd.gov.hk/care/cms/en/aed/main/edit/{aed_id}/")

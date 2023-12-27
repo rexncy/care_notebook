@@ -2,8 +2,10 @@ import os
 import time
 import shutil
 from datetime import datetime
+from loguru import logger
 
-BAK_DIR_NAME = 'bak'
+BAK_DIR_NAME = "bak"
+
 
 def back_dir(src_dir):
     if not os.path.exists(src_dir):
@@ -17,27 +19,35 @@ def back_dir(src_dir):
         date_string = now.strftime("%Y%m%d%H%M%S")
         for filename in os.listdir(src_dir):
             src_filename = os.path.join(src_dir, filename)
-            print(f'src_filename: {src_filename}')
+            print(f"src_filename: {src_filename}")
             # skip hidden files / folders / bak folder itself
-            if (not os.path.isfile(src_filename)) or filename.startswith('.') or filename.startswith('bak'):
+            if (
+                (not os.path.isfile(src_filename))
+                or filename.startswith(".")
+                or filename.startswith("bak")
+            ):
                 continue
             # Create the backup filename by appending the date and time string
             backup_filename = os.path.join(bak_dir, f"{filename}.{date_string}")
             # Move the file to the backup location
-            print(f'move :{src_filename} to {backup_filename}')
+            print(f"move :{src_filename} to {backup_filename}")
             shutil.move(src_filename, backup_filename)
             count = count + 1
 
-        return count 
+        return count
+
 
 def download_wait(path_to_downloads, timeout_s):
+    logger.info("Awaiting download to complete...")
+
     seconds = 0
     dl_wait = True
     while dl_wait and seconds < timeout_s:
         time.sleep(1)
         dl_wait = False
         for fname in os.listdir(path_to_downloads):
-            if fname.endswith('.crdownload'):
+            if fname.endswith(".crdownload"):
                 dl_wait = True
         seconds += 1
+    logger.info(f"Download complete after {seconds} seconds")
     return seconds
