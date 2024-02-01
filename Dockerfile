@@ -24,6 +24,7 @@ RUN pip install --no-cache-dir jinja2
 RUN pip install --no-cache-dir schedule
 RUN pip install --no-cache-dir pytz
 COPY . /app/
+ENV TZ Asia/Hong_Kong
 RUN mkdir /app/data
 
 RUN chmod +x /app/entrypoint.sh
