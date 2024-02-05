@@ -86,8 +86,15 @@ def scrape_unapproved_aed_ids(b):
         tr_elements = b.find_by_xpath('//tr[.//img[@src="img/icon-offer_0.png"]]')
         found = False
         for tr in tr_elements:
-            arr_aed_id.append(tr["data-id"])
-            found = True
+            all_text = tr.text
+            contain_sn = "Serial No.:" in all_text
+            data_id = tr["data-id"]
+            if not contain_sn:
+                logger.info(f"Found unprocessed AED: {data_id = }")
+                arr_aed_id.append(data_id)
+                found = True
+            else:
+                logger.debug(f"AED already processed: {data_id = }")
         if not found:
             break
         else:

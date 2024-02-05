@@ -6,6 +6,12 @@ from datetime import datetime
 BAK_DIR_NAME = "bak"
 
 
+from app_logger import get_logger
+import logging
+
+logger = get_logger(__name__, logging.DEBUG, True, True)
+
+
 def back_dir(src_dir):
     if not os.path.exists(src_dir):
         return None

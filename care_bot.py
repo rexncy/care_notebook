@@ -68,62 +68,65 @@ with Browser(
     b = login(b)
 
     if isLoggedIn(b):
-        logger.info("Login successful.")
+        try:
+            logger.info("Login successful.")
 
-        # process aed approval preparation
-        # Find all tr elements that contain img with src="img/icon-offer_0.png"
-        logger.info("Scraping unapproved AED IDs...")
-        arr_aed_id = scrape_unapproved_aed_ids(b)
+            # process aed approval preparation
+            # Find all tr elements that contain img with src="img/icon-offer_0.png"
+            logger.info("Scraping unapproved AED IDs...")
+            arr_aed_id = scrape_unapproved_aed_ids(b)
 
-        for aed_id in arr_aed_id:
-            logger.debug(f"Processing AED = {aed_id}")
+            for aed_id in arr_aed_id:
+                logger.debug(f"Processing AED = {aed_id}")
 
-            # visit get the edit link
-            b.visit(f"https://es.hkfsd.gov.hk/care/cms/en/aed/main/edit/{aed_id}/")
-            # get the assigned Serial number
+                # visit get the edit link
+                b.visit(f"https://es.hkfsd.gov.hk/care/cms/en/aed/main/edit/{aed_id}/")
+                # get the assigned Serial number
 
-            # fill serial_no as aed_id
-            serial_no_field = b.find_by_id("serial_no")
-            if not serial_no_field.value or len(serial_no_field.value) == 0:
-                logger.debug(f"Fill serial_no: {aed_id}")
-                b.find_by_id("serial_no").fill(aed_id)
+                # fill serial_no as aed_id
+                serial_no_field = b.find_by_id("serial_no")
+                if not serial_no_field.value or len(serial_no_field.value) == 0:
+                    logger.debug(f"Fill serial_no: {aed_id}")
+                    b.find_by_id("serial_no").fill(aed_id)
 
-                # see whether yellow-dot.png exists, if not, remark warning
+                    # see whether yellow-dot.png exists, if not, remark warning
 
-                if "yellow-dot.png" in b.html:
-                    logger.debug(f"Yellow-dot.png exists for {aed_id}")
+                    if "yellow-dot.png" in b.html:
+                        logger.debug(f"Yellow-dot.png exists for {aed_id}")
+                    else:
+                        logger.info(f"未完成地圖設定: {aed_id}")
+                        append_to_field_value(b, "remark_3", "未完成地圖設定")
+
+                    # The following code does not work in headless mode, despite wait_time is supplied for the element to show
+                    # it appears to be a driver bug
+                    # click save button
+                    # b.find_by_id('btn-save').last.click()
+
+                    # workaround: use js to submit the form
+                    b.execute_script("$('form:first').submit();")
                 else:
-                    logger.info(f"未完成地圖設定: {aed_id}")
-                    append_to_field_value(b, "remark_3", "未完成地圖設定")
+                    logger.debug(f"AED = {aed_id} already processed.")
 
-                # The following code does not work in headless mode, despite wait_time is supplied for the element to show
-                # it appears to be a driver bug
-                # click save button
-                # b.find_by_id('btn-save').last.click()
+            logger.info(f"Downloading unapproved AED file...")
+            b = download_unapproved_aed_file(b)
+            download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
+            rename_file_if_exists(TODAY_DIR, "AED.xlsx", "AED_unapproved.xlsx")
 
-                # workaround: use js to submit the form
-                b.execute_script("$('form:first').submit();")
-            else:
-                logger.debug(f"AED = {aed_id} already processed.")
+            logger.info(f"Downloading AED files...")
+            b = download_aed_file(b)
+            download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
 
-        logger.info(f"Downloading unapproved AED file...")
-        b = download_unapproved_aed_file(b)
-        download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
-        rename_file_if_exists(TODAY_DIR, "AED.xlsx", "AED_unapproved.xlsx")
+            logger.info(f"Downloading account files...")
+            b = download_account_file(b)
+            download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
 
-        logger.info(f"Downloading AED files...")
-        b = download_aed_file(b)
-        download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
+            logger.info(f"Downloading outstanding AED files...")
+            b = download_outstanding_aed(b)
+            download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
 
-        logger.info(f"Downloading account files...")
-        b = download_account_file(b)
-        download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
-
-        logger.info(f"Downloading outstanding AED files...")
-        b = download_outstanding_aed(b)
-        download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
-
-        logout(b)
-        logger.info("Logout successful.")
+            logout(b)
+            logger.info("Logout successful.")
+        except:
+            logger.exception("Exception occurred.")
     else:
         logger.info("Login failure.")

@@ -7,6 +7,8 @@ import logging
 
 logger = get_logger(__name__, logging.DEBUG, True, True)
 
+schedule_logger = get_logger("schedule", logging.DEBUG, True, True)
+
 
 script = os.path.join(os.path.dirname(__file__), "care_bot.py")
 
@@ -20,7 +22,6 @@ def run_script():
 
 # Schedule the script to run every day at 12:00 PM UTC+8
 schedule.every().day.at("08:15", "Asia/Hong_Kong").do(run_script).tag("care_bot_task")
-
 schedule.run_all()
 
 all_jobs = schedule.get_jobs()
