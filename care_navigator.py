@@ -36,7 +36,6 @@ def isLoggedIn(b):
 
 
 def download_unapproved_aed_file(b):
-    logger.debug("Download unapproved AED file...")
     b.visit(
         "https://es.hkfsd.gov.hk/care/cms/en/aed/export/?_sort=id&_order=desc&approved=0"
     )

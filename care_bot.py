@@ -88,21 +88,24 @@ with Browser(
                 logger.debug(f"Fill serial_no: {aed_id}")
                 b.find_by_id("serial_no").fill(aed_id)
 
-            # see whether yellow-dot.png exists, if not, remark warning
+                # see whether yellow-dot.png exists, if not, remark warning
 
-            if "yellow-dot.png" in b.html:
-                logger.debug(f"Yellow-dot.png exists for {aed_id}")
+                if "yellow-dot.png" in b.html:
+                    logger.debug(f"Yellow-dot.png exists for {aed_id}")
+                else:
+                    logger.info(f"未完成地圖設定: {aed_id}")
+                    append_to_field_value(b, "remark_3", "未完成地圖設定")
+
+                # The following code does not work in headless mode, despite wait_time is supplied for the element to show
+                # it appears to be a driver bug
+                # click save button
+                # b.find_by_id('btn-save').last.click()
+
+                # workaround: use js to submit the form
+                b.execute_script("$('form:first').submit();")
             else:
-                logger.info(f"未完成地圖設定: {aed_id}")
-                append_to_field_value(b, "remark_3", "未完成地圖設定")
+                logger.debug(f"AED = {aed_id} already processed.")
 
-            # The following code does not work in headless mode, despite wait_time is supplied for the element to show
-            # it appears to be a driver bug
-            # click save button
-            # b.find_by_id('btn-save').last.click()
-
-            # workaround: use js to submit the form
-            b.execute_script("$('form:first').submit();")
         logger.info(f"Downloading unapproved AED file...")
         b = download_unapproved_aed_file(b)
         download_wait(TODAY_DIR, EXTENDED_TIMEOUT)

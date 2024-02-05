@@ -2,7 +2,6 @@ import os
 import time
 import shutil
 from datetime import datetime
-from loguru import logger
 
 BAK_DIR_NAME = "bak"
 

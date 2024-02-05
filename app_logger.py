@@ -22,7 +22,7 @@ def get_logger(name, level, write_file=True, write_console=True):
     if write_console:
         # Configure the console handler
         console_handler = logging.StreamHandler(sys.stdout)
-        file_handler.setFormatter(
+        console_handler.setFormatter(
             logging.Formatter(
                 "%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s"
             )

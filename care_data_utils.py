@@ -2,6 +2,10 @@
 
 import pandas as pd
 import os
+from app_logger import get_logger
+import logging
+
+logger = get_logger(__name__, logging.DEBUG, True, True)
 
 
 def rename_file_if_exists(dir, old_name, new_name):
