@@ -18,17 +18,10 @@ def run_script():
     logger.info(f"{all_jobs = }")
 
 
-def run_script_once():
-    run_script()
-    return schedule.CancelJob
-
-
 # Schedule the script to run every day at 12:00 PM UTC+8
-
 schedule.every().day.at("08:15", "Asia/Hong_Kong").do(run_script).tag("care_bot_task")
-if os.environ.get("DEBUG", False):
-    logger.info("Schedule script to run once for DEBUG purposes")
-    schedule.every(3).seconds.do(run_script_once).tag("care_bot_task_once")
+
+schedule.run_all()
 
 all_jobs = schedule.get_jobs()
 logger.info(f"{all_jobs = }")
