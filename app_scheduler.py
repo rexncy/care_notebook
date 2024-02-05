@@ -24,15 +24,16 @@ def run_script():
 # Schedule the script to run every day at 12:00 PM UTC+8
 
 logger.info(script)
-schedule.every().day.at("08:15", "HongKong").do(run_script).tag("care_bot_task")
+schedule.every().day.at("08:15", "Asia/Hong_Kong").do(run_script).tag("care_bot_task")
 
 if os.environ.get("DEBUG", False):
     logger.info("Running script for DEBUG purposes")
     run_script()
 
 logger.info("Running scheduler...")
-subprocess.run(["python", script])
 all_jobs = schedule.get_jobs()
+logger.info(f"{all_jobs = }")
+
 # Keep the script running to check for scheduled tasks
 try:
     while True:
