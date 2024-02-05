@@ -1,6 +1,9 @@
 from splinter import Browser
-from loguru import logger
+from app_logger import get_logger
 import os
+import logging
+
+logger = get_logger(__name__, logging.DEBUG, True, True)
 
 
 def login(b):

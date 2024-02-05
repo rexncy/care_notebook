@@ -5,11 +5,8 @@ import os
 from app_logger import get_logger
 import logging
 
-logger = get_logger(__name__, logging.INFO, True, True)
+logger = get_logger(__name__, logging.DEBUG, True, True)
 
-logging.basicConfig()
-schedule_logger = logging.getLogger("schedule")
-schedule_logger.setLevel(level=logging.DEBUG)
 
 script = os.path.join(os.path.dirname(__file__), "care_bot.py")
 
@@ -21,19 +18,20 @@ def run_script():
     logger.info(f"{all_jobs = }")
 
 
+def run_script_once():
+    run_script()
+    return schedule.CancelJob
+
+
 # Schedule the script to run every day at 12:00 PM UTC+8
 
-logger.info(script)
 schedule.every().day.at("08:15", "Asia/Hong_Kong").do(run_script).tag("care_bot_task")
-
 if os.environ.get("DEBUG", False):
-    logger.info("Running script for DEBUG purposes")
-    run_script()
+    logger.info("Schedule script to run once for DEBUG purposes")
+    schedule.every(3).seconds.do(run_script_once).tag("care_bot_task_once")
 
-logger.info("Running scheduler...")
 all_jobs = schedule.get_jobs()
 logger.info(f"{all_jobs = }")
-
 # Keep the script running to check for scheduled tasks
 try:
     while True:

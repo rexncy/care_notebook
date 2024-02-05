@@ -1,7 +1,6 @@
 # Login and download AED and Account data csv
 from splinter import Browser
 import os
-from loguru import logger
 from selenium import webdriver
 from datetime import datetime
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -21,7 +20,10 @@ from care_navigator import (
     append_to_field_value,
 )
 
-import pandas as pd
+from app_logger import get_logger
+import logging
+
+logger = get_logger(__name__, logging.DEBUG, True, True)
 
 today = datetime.today().strftime("%Y%m%d")
 
@@ -55,7 +57,7 @@ options.add_argument("--headless")
 
 
 # when the page needs more time to wait
-EXTENDED_TIMEOUT = 15
+EXTENDED_TIMEOUT = 90
 
 with Browser(
     "chrome",
@@ -70,7 +72,7 @@ with Browser(
 
         # process aed approval preparation
         # Find all tr elements that contain img with src="img/icon-offer_0.png"
-
+        logger.info("Scraping unapproved AED IDs...")
         arr_aed_id = scrape_unapproved_aed_ids(b)
 
         for aed_id in arr_aed_id:
@@ -101,13 +103,20 @@ with Browser(
 
             # workaround: use js to submit the form
             b.execute_script("$('form:first').submit();")
-
+        logger.info(f"Downloading unapproved AED file...")
         b = download_unapproved_aed_file(b)
         download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
         rename_file_if_exists(TODAY_DIR, "AED.xlsx", "AED_unapproved.xlsx")
 
+        logger.info(f"Downloading AED files...")
         b = download_aed_file(b)
+        download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
+
+        logger.info(f"Downloading account files...")
         b = download_account_file(b)
+        download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
+
+        logger.info(f"Downloading outstanding AED files...")
         b = download_outstanding_aed(b)
         download_wait(TODAY_DIR, EXTENDED_TIMEOUT)
 
